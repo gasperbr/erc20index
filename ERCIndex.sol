@@ -1,9 +1,9 @@
 pragma solidity ^0.6.0;
 
-// import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20Detailed.sol";
+// "SPDX-License-Identifier: UNLICENSED"
+
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol";
 
-// import "github.com/oraclize/ethereum-api/provableAPI.sol";
 import "./2_Owner.sol";
 
 interface MyUniswapProxy {
@@ -36,6 +36,7 @@ contract ERCIndex is ERC20, Owner {
     
     }
     
+    // add address of ERC20 token to top token regitry
     function addNextTopToken(ERC20 _token) public isOwner {
         // ropsten addresses:
         // DAI 0xaD6D458402F60fD3Bd25163575031ACDce07538D
@@ -45,11 +46,15 @@ contract ERCIndex is ERC20, Owner {
         // OMG 0x4BFBa4a8F28755Cb2061c413459EE562c6B9c51b -
         // KNC 0x7b2810576aa1cce68f2b118cef1f36467c648f92 -
         
+        // wont have more than 10 ERC20 tokens - keeping gas costs low
+        require(topTokensLength() < 10);
+        
         topTokens.push(_token);
         
         _token.approve(address(myUniswapProxy), (2 ** 256) - 1);
     }
     
+    // remove address of ERC20 token to top token regitry & sell it for DAI
     function removeTopTopen(uint _index) public isOwner {
         
         require(_index >= 0 && _index < topTokensLength()); 
@@ -68,6 +73,7 @@ contract ERCIndex is ERC20, Owner {
         
     }
     
+    // helper function used by myUniswapProxy contract
     function getTokenAddressAndBalance(uint _index) public view returns (ERC20, uint) {
         
         require (_index < topTokensLength());
@@ -76,6 +82,10 @@ contract ERCIndex is ERC20, Owner {
         
     }
     
+    /*
+        Call this function to purchase ERCI with DAI (must set dai allowance beforehand)
+        The index will buy the appropriate token from its registry and mint the sender their share of ERCI
+    */
     function buyERCIWithDai(uint256 _daiAmount) public returns(bool) {
     
         require(isActive, "Contract was shut down!");
@@ -100,7 +110,8 @@ contract ERCIndex is ERC20, Owner {
         _mint(msg.sender, mintAmount);
     }
     
-    // _totalDaiValue is always >= _addAmount
+    // Calculate fair share of ERCI tokens
+    // note - _totalDaiValue is always >= _addAmount
     function getMintAmount(uint _addAmount, uint _totalDaiValue) public view returns(uint) {
         
         uint previousDaiValue = _totalDaiValue - _addAmount;
@@ -123,6 +134,7 @@ contract ERCIndex is ERC20, Owner {
         
     }
 
+    // call this function to sell ERCI tokens and claim your share of DAI from the fund
     function sellERCIforDai(uint _erciAmount) public {
         
         require(_erciAmount > 0 , "Amount too low");
@@ -140,15 +152,14 @@ contract ERCIndex is ERC20, Owner {
         
     }
     
-    /*
-        return the percent of ERCI that is being sold, multiplied by 10 ** 18
-    */
+    // return the percent of ERCI that is being sold, multiplied by 10 ** 18
     function getPercent(uint _erciAmount) internal view returns(uint) {
         
         return (_erciAmount * (10 ** 18))  / totalSupply(); // instead of 0.125 return 125000000000000000
         
     }
     
+    // will sell percent of each token and send DAI to _receiver
     function _sellPercentOfIndexForDai(uint _percent, address _receiver) internal {
         
         for (uint i = 0; i < topTokensLength(); i++) {
@@ -167,6 +178,7 @@ contract ERCIndex is ERC20, Owner {
         }
     }
     
+    // when selling, also claim you share of DAI the fund is holding
     function _claimDai(uint _percent) internal {
     
         uint daiAmount = (daiToken.balanceOf(address(this)) * _percent) / 10 ** 18;
@@ -186,6 +198,7 @@ contract ERCIndex is ERC20, Owner {
         
     }
     
+    // disable purchasing of ERCI and sell all tokens for DAI
     function exit() isOwner public {
         
         isActive = false;
