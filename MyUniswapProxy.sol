@@ -1,5 +1,7 @@
 pragma solidity ^0.5.0;
 
+// "SPDX-License-Identifier: UNLICENSED"
+
 interface ERC20 {
     function totalSupply() external view returns (uint);
     function balanceOf(address tokenOwner) external view returns (uint balance);
@@ -45,25 +47,25 @@ contract UniswapExchangeInterface {
     function getTokenToEthInputPrice(uint256 tokens_sold) external view returns (uint256 eth_bought);
     function getTokenToEthOutputPrice(uint256 eth_bought) external view returns (uint256 tokens_sold);
     // Trade ETH to ERC20
-    function ethToTokenSwapInput(uint256 min_tokens, uint256 deadline) external payable returns (uint256  tokens_bought);
-    function ethToTokenTransferInput(uint256 min_tokens, uint256 deadline, address recipient) external payable returns (uint256  tokens_bought);
-    function ethToTokenSwapOutput(uint256 tokens_bought, uint256 deadline) external payable returns (uint256  eth_sold);
-    function ethToTokenTransferOutput(uint256 tokens_bought, uint256 deadline, address recipient) external payable returns (uint256  eth_sold);
+    // function ethToTokenSwapInput(uint256 min_tokens, uint256 deadline) external payable returns (uint256  tokens_bought);
+    // function ethToTokenTransferInput(uint256 min_tokens, uint256 deadline, address recipient) external payable returns (uint256  tokens_bought);
+    // function ethToTokenSwapOutput(uint256 tokens_bought, uint256 deadline) external payable returns (uint256  eth_sold);
+    // function ethToTokenTransferOutput(uint256 tokens_bought, uint256 deadline, address recipient) external payable returns (uint256  eth_sold);
     // Trade ERC20 to ETH
-    function tokenToEthSwapInput(uint256 tokens_sold, uint256 min_eth, uint256 deadline) external returns (uint256  eth_bought);
-    function tokenToEthTransferInput(uint256 tokens_sold, uint256 min_eth, uint256 deadline, address recipient) external returns (uint256  eth_bought);
-    function tokenToEthSwapOutput(uint256 eth_bought, uint256 max_tokens, uint256 deadline) external returns (uint256  tokens_sold);
-    function tokenToEthTransferOutput(uint256 eth_bought, uint256 max_tokens, uint256 deadline, address recipient) external returns (uint256  tokens_sold);
+    // function tokenToEthSwapInput(uint256 tokens_sold, uint256 min_eth, uint256 deadline) external returns (uint256  eth_bought);
+    // function tokenToEthTransferInput(uint256 tokens_sold, uint256 min_eth, uint256 deadline, address recipient) external returns (uint256  eth_bought);
+    // function tokenToEthSwapOutput(uint256 eth_bought, uint256 max_tokens, uint256 deadline) external returns (uint256  tokens_sold);
+    // function tokenToEthTransferOutput(uint256 eth_bought, uint256 max_tokens, uint256 deadline, address recipient) external returns (uint256  tokens_sold);
     // Trade ERC20 to ERC20
     function tokenToTokenSwapInput(uint256 tokens_sold, uint256 min_tokens_bought, uint256 min_eth_bought, uint256 deadline, address token_addr) external returns (uint256  tokens_bought);
     function tokenToTokenTransferInput(uint256 tokens_sold, uint256 min_tokens_bought, uint256 min_eth_bought, uint256 deadline, address recipient, address token_addr) external returns (uint256  tokens_bought);
     function tokenToTokenSwapOutput(uint256 tokens_bought, uint256 max_tokens_sold, uint256 max_eth_sold, uint256 deadline, address token_addr) external returns (uint256  tokens_sold);
     function tokenToTokenTransferOutput(uint256 tokens_bought, uint256 max_tokens_sold, uint256 max_eth_sold, uint256 deadline, address recipient, address token_addr) external returns (uint256  tokens_sold);
     // Trade ERC20 to Custom Pool
-    function tokenToExchangeSwapInput(uint256 tokens_sold, uint256 min_tokens_bought, uint256 min_eth_bought, uint256 deadline, address exchange_addr) external returns (uint256  tokens_bought);
-    function tokenToExchangeTransferInput(uint256 tokens_sold, uint256 min_tokens_bought, uint256 min_eth_bought, uint256 deadline, address recipient, address exchange_addr) external returns (uint256  tokens_bought);
-    function tokenToExchangeSwapOutput(uint256 tokens_bought, uint256 max_tokens_sold, uint256 max_eth_sold, uint256 deadline, address exchange_addr) external returns (uint256  tokens_sold);
-    function tokenToExchangeTransferOutput(uint256 tokens_bought, uint256 max_tokens_sold, uint256 max_eth_sold, uint256 deadline, address recipient, address exchange_addr) external returns (uint256  tokens_sold);
+    // function tokenToExchangeSwapInput(uint256 tokens_sold, uint256 min_tokens_bought, uint256 min_eth_bought, uint256 deadline, address exchange_addr) external returns (uint256  tokens_bought);
+    // function tokenToExchangeTransferInput(uint256 tokens_sold, uint256 min_tokens_bought, uint256 min_eth_bought, uint256 deadline, address recipient, address exchange_addr) external returns (uint256  tokens_bought);
+    // function tokenToExchangeSwapOutput(uint256 tokens_bought, uint256 max_tokens_sold, uint256 max_eth_sold, uint256 deadline, address exchange_addr) external returns (uint256  tokens_sold);
+    // function tokenToExchangeTransferOutput(uint256 tokens_bought, uint256 max_tokens_sold, uint256 max_eth_sold, uint256 deadline, address recipient, address exchange_addr) external returns (uint256  tokens_sold);
     // ERC20 comaptibility for liquidity tokens
     bytes32 public name;
     bytes32 public symbol;
@@ -88,18 +90,19 @@ contract MyUniswapProxy {
     
     bool public contractSet = false;
     
-    // ERC20 daiToken = ERC20(0x2448eE2641d78CC42D7AD76498917359D961A783); // Rinkeby
+    //ERC20 daiToken = ERC20(0x2448eE2641d78CC42D7AD76498917359D961A783); // Rinkeby
     ERC20 daiToken = ERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F); // mainnet
     
     constructor () public {
 
-        // factory = UniswapFactoryInterface(0xf5D915570BC477f9B8D6C0E980aA81757A3AaC36); // rinkeby
+        //factory = UniswapFactoryInterface(0xf5D915570BC477f9B8D6C0E980aA81757A3AaC36); // rinkeby
         factory = UniswapFactoryInterface(0xc0a47dFe034B400B47bDaD5FecDa2621de6c4d95); // mainnet
 
     }
     
     // Functions 
     
+    // make the erc index contract address a constant
     function setERCIndexContract(address _address) public {
         
         require(!contractSet);
@@ -110,6 +113,11 @@ contract MyUniswapProxy {
         
     }
     
+    /*
+    Main function, called from ERCIndex contract
+    It reads the balances of the ERCindex contract tokens and calculates their respective values (in DAI)
+    It calculates target values and return the index of the token which is most behing its target value
+    */
     function calculateIndexValueAndNextTokenIndex(uint _numberOfTokens) public returns(uint, uint) {
         
         require(_numberOfTokens > 0);
@@ -128,6 +136,7 @@ contract MyUniswapProxy {
         
         uint[] memory marketCaps = new uint[](_numberOfTokens);
         
+        // caluclate value of each token in for loop - O(n)
         for (uint i = 0; i < _numberOfTokens; i++) {
             
             (token, tokenBalance) = ercIndex.getTokenAddressAndBalance(i);
@@ -146,14 +155,18 @@ contract MyUniswapProxy {
         
         uint daiValue = daiToken.balanceOf(address(ercIndex));
         
+        // calculate total value of ERCIndex conract (excluding dai holdings=)
         daiValue += ethValue / getTokenEthPrice(address(daiToken)); // DAIEUR > 0
     
-        // marketCaps and (eth)Value & token(Eth)Values must all be all in the same currency (eth in this case)
+        // note - marketCaps and Value & token Values must all be all in the same currency (eth in this case)
         return (daiValue, calculateBiggestDifference(_numberOfTokens, marketCaps, ethValue, tokenEthValues));
         
     }
     
     /*
+    
+        Logic for calculating target values for each coin and returning the coin that should be bought - O(n^2)
+    
         Recieve market cap of each token in ETH;
         From token with biggest market cap to token with smallest:
         calculate target index value for token, based on number of tokens, total daiAmount in index and the number of tokens
@@ -174,8 +187,10 @@ contract MyUniswapProxy {
         
         uint j;
         
+        // n - times / for each token ...
         for (uint i = 0; i < _numberOfTokens; i++) {
-            
+
+            // find the token with the next hightest marketCap (biggestMcapIndex)
             for (j = 0; j < _numberOfTokens; j++) {
                 
                 if (_marketCaps[j] > biggestMcap) {
@@ -192,8 +207,10 @@ contract MyUniswapProxy {
             
             _marketCaps[biggestMcapIndex] = 0;
             
+            // target value is calculated with O(1) complexity
             uint targetValue = baseAmount + ((baseAmount * ((_numberOfTokens * 2) - (1 + (2 * i)))) / _numberOfTokens);
             
+            // remember which token has the biggest difference from its target value
             if (_tokenDaiValues[biggestMcapIndex] < targetValue && targetValue - _tokenDaiValues[biggestMcapIndex] > biggestDifference) {
                 
                 biggestDifference = targetValue - _tokenDaiValues[biggestMcapIndex];
@@ -233,6 +250,7 @@ contract MyUniswapProxy {
         
     }
     
+    // ERCIndex calls this function to execute ERC swaps
     function executeSwap(ERC20 _srcToken, uint _tokensSold, address _destToken, address _destAddress) public {
         
         // Check that the token transferFrom has succeeded
@@ -259,13 +277,13 @@ contract MyUniswapProxy {
         exchange.tokenToTokenTransferInput(_tokensSold, 1, 1, now + 10 minutes, _destAddress, _destToken);
     }
     
+    /*
+    will be used when purchasing with ETH is enabled
     function ethToTokenTransferInput(ERC20 _token) external payable returns (uint256 tokens_bought) {
-        
         UniswapExchangeInterface exchange = UniswapExchangeInterface(factory.getExchange(address(_token)));
-        
         // uint256 min_tokens, uint256 deadline, address recipient
         return exchange.ethToTokenTransferInput.value(msg.value)(1, now + 10 minutes, msg.sender);
         
-    }
+    }*/
     
 }
